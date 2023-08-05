@@ -42,13 +42,20 @@ public static class ConnectionManager
     public static void Disconnect()
     {
         NetworkManager.Singleton.Shutdown();
-        Loader.Load(UnityScene.Menu);
+
+        if (SceneManager.GetActiveScene().name == UnityScene.Game.ToString())
+        {
+            Loader.Load(UnityScene.Menu);
+        }
         
         NetworkManager.Singleton.ConnectionApprovalCallback -= ConnectionApproval.ConnectionApprovalCallback;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnLocalClientDisconnectCallback;
     }
     
     private static void ConnectAsClient(string address, ushort port)
     {
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnLocalClientDisconnectCallback;
+        
         SetConnectionData(address, port);
         NetworkManager.Singleton.StartClient();
     }
@@ -56,13 +63,19 @@ public static class ConnectionManager
     private static void ConnectAsHost(string address, ushort port)
     {
         NetworkManager.Singleton.ConnectionApprovalCallback += ConnectionApproval.ConnectionApprovalCallback;
+        
         SetConnectionData(address, port);
         NetworkManager.Singleton.StartHost();
 
         Loader.Load(UnityScene.Game, true);
     }
     
-
+    private static void OnLocalClientDisconnectCallback(ulong clientId)
+    {
+        if (NetworkManager.Singleton.IsServer) return;
+        Disconnect();
+    }
+    
     private static void SetConnectionData(string address, ushort port)
     {
         NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Address = address;

@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +22,30 @@ namespace ViewSystem
             {
                 ConnectionManager.Connect(ConnectionType.Host);
             });
+            
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
+        }
+        
+        protected override void OnDisable()
+        {
+            if (NetworkManager.Singleton != null)
+            {
+                NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectCallback;
+            }
+        }
+        
+        private void OnClientDisconnectCallback(ulong obj)
+        {
+            var disconnectReason = NetworkManager.Singleton.DisconnectReason;
+
+            if (string.IsNullOrEmpty(disconnectReason))
+            {
+                Debug.Log("Couldn't connect!");
+            }
+            else
+            {
+                Debug.Log(disconnectReason);
+            }
         }
     }
 
